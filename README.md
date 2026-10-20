@@ -87,14 +87,17 @@ python backtest.py --years 3
 python backtest.py --offline
 ```
 
-### 4. 运行每日行情扫描与模拟盘自动下单
+### 4. 运行每日行情扫描、LLM 新闻体检与模拟盘自动下单
 
 ```bash
 # 安全预览模式 (Dry-Run)：扫描今日最新日线信号与风控建议，不实际发单
-python trade.py
+python trade.py --strategy hybrid
 
-# 正式执行模式：将风控审核通过的订单提交至 Alpaca 模拟盘
-python trade.py --execute
+# 开启 Phase 2 本地 LLM 新闻守门员 + 全景新闻风险体检表
+python trade.py --strategy hybrid --llm-audit --llm-guard
+
+# 正式执行模式：将量化 + LLM 风控审核通过的订单提交至 Alpaca 模拟盘
+python trade.py --strategy hybrid --llm-guard --execute
 
 # 冒烟测试模式：立刻向 Alpaca 模拟盘下 1 股 SPY 测试买单，验证 API 链路
 python trade.py --smoke-test
@@ -106,14 +109,14 @@ python trade.py --smoke-test
 
 - [x] **Phase 1: 确定性量化骨架与回测/模拟交易闭环**
   - [x] `MA200 + RSI` 均值回归、`MA20/MA50` 趋势跟踪、全天候融合策略
-  - [x] 四道风控铁闸（只做多锁、-7% 硬止损、-12% 移动止损、单票 20% 仓位上限）
+  - [x] 四道风控铁闸（只做多锁、-8% 硬止损、-18% 移动止损、单票 20% 仓位上限）
   - [x] 多标的组合历史回测引擎（对比 `SPY` 基准收益与最大回撤）
-  - [x] Alpaca Paper Trading 每日信号扫描与自动下单 CLI
-- [ ] **Phase 2: LLM 新闻情绪与财报日历守门员 (`PreTradeGuard`)**
-  - [ ] 接入 Alpaca News API 拉取触发 `BUY` 信号标的过去 24~72 小时新闻摘要
-  - [ ] 使用 LLM 结构化评估是否存在重大基本面暴雷或盘后财报赌博风险，实现“量化踩油门、LLM 踩刹车”
+  - [x] Alpaca Paper Trading 每日信号扫描与自动下单 CLI（带外部策略持仓自动隔离保护）
+- [x] **Phase 2: LLM 新闻情绪与基本面暴雷守门员 (`swing_pilot/llm_guard.py`)**
+  - [x] 接入 Alpaca News API 自动拉取标的池过去 72 小时实时英文财经新闻标题与摘要
+  - [x] 对接本地 OpenAI 兼容大模型接口（如 `http://localhost:11435/v1` 上的 `qwen3.8-flash-next`），内置指数退避重试防多 Agent 并发排队冲突，实现“量化踩油门、LLM 踩刹车”
 - [ ] **Phase 3: 自动化定时调度与通知推送**
-  - [ ] 支持每日美股收盘前 15 分钟自动巡检与 Telegram / Discord / 邮件日报推送
+  - [ ] 支持每日美股收盘前 15 分钟或收盘后自动巡检与 Telegram / Discord / 邮件日报推送
 
 ---
 

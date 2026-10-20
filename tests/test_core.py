@@ -106,3 +106,19 @@ def test_strategies_and_backtester_offline() -> None:
         assert report.trading_days > 100
         assert report.final_equity > 0
         assert isinstance(report.equity_curve, pd.Series)
+
+
+def test_llm_guard_json_parser() -> None:
+    """Verify LocalLLMNewsGuard cleanly strips <think> blocks and parses JSON."""
+    from swing_pilot.llm_guard import LocalLLMNewsGuard
+
+    raw = (
+        "<think>\nLet me analyze the news...\n</think>\n"
+        '```json\n{"approved": false, "sentiment": "bearish", "risk_level": "high", '
+        '"summary_zh": "突发反垄断调查，暂缓抄底"}\n```'
+    )
+    parsed = LocalLLMNewsGuard._parse_json_response(raw)
+    assert parsed["approved"] is False
+    assert parsed["sentiment"] == "bearish"
+    assert parsed["risk_level"] == "high"
+    assert "反垄断" in parsed["summary_zh"]
